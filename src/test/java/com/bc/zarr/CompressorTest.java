@@ -138,13 +138,10 @@ public class CompressorTest {
         ByteArrayOutputStream os;
         ByteArrayInputStream is;
 
-        final byte[] intermediate = {2, 1, 33, 1, -36, 0, 0, 0, -36, 0, 0, 0, 73, 0, 0, 0, 20, 0, 0, 0, 49, 0, 0, 0, -5, 17, 0, 0, 0, 100, 0, 0, 0, 22, 0, 0, 0, 100, 0, 0, 0, 22, 0, 0, 0, 22, 0, 0, 0, 22, 0, 0, 0, 100, 0, 0, 0, 100, 32, 0, 0, 20, 0, 15, 44, 0, -111, 80, 22, 0, 0, 0, 100};
-
         //write
         os = new ByteArrayOutputStream();
         compressor.compress(new ZarrInputStreamAdapter(iis), os);
         final byte[] compressed = os.toByteArray();
-        assertThat(compressed, is(equalTo(intermediate)));
 
         //read
         is = new ByteArrayInputStream(compressed);
