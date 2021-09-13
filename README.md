@@ -20,3 +20,14 @@ date and along with the code. Therefor a class has been implemented which search
 classes whose filename ends with "_rtd.java" and invokes whose **`main`** method.
 Rerun the class (**`ExecuteForReadTheDocs`**) to autogenerate these
 referenced files.
+
+## Snapshot versions
+
+Snapshot versions have been deployed to https://repo.glencoesoftware.com/repository/jzarr-snapshots/, and correspond to the following commits:
+
+Snapshot version                                | Commit
+------------------------------------------------|-----------------------------------------------------------------------------------------
+0.3.3-gs-SNAPSHOT/0.3.3-gs-20210224.144307-1	| https://github.com/glencoesoftware/jzarr/commit/4341973a9c6076b795dabef0ff05f088b0c41215
+0.3.3-gs-SNAPSHOT/0.3.3-gs-20210224.144924-2	| https://github.com/glencoesoftware/jzarr/commit/4341973a9c6076b795dabef0ff05f088b0c41215
+0.3.3-gs-SNAPSHOT/0.3.3-gs-20210412.092346-3	| https://github.com/glencoesoftware/jzarr/commit/0be6d3a7a8a2447dcbaca1783a91ddf9867684f9
+0.3.3-gs-SNAPSHOT/0.3.3-gs-20210426.125901-4	| https://github.com/glencoesoftware/jzarr/commit/6db9f5e6134a2a9813ac5e70b0392f0e8ba190b3
