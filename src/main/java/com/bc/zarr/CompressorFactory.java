@@ -31,6 +31,7 @@ import org.blosc.BufferSizes;
 import org.blosc.IBloscDll;
 import org.blosc.JBlosc;
 
+import java.awt.image.WritableRaster;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -46,6 +47,16 @@ import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
+
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
+import loci.common.services.ServiceFactory;
+import ome.codecs.CodecException;
+import ome.codecs.JPEG2000Codec;
+import ome.codecs.JPEG2000CodecOptions;
+import ome.codecs.gui.AWTImageTools;
+import ome.codecs.services.JAIIIOService;
+import ome.codecs.services.JAIIIOServiceImpl;
 
 public class CompressorFactory {
 
@@ -119,6 +130,9 @@ public class CompressorFactory {
         }
         if ("blosc".equals(id)) {
             return new BloscCompressor(properties);
+        }
+        if ("j2k".equals(id)) {
+            return new J2KCompressor(properties);
         }
         throw new IllegalArgumentException("Compressor id:'" + id + "' not supported.");
     }
@@ -356,5 +370,110 @@ public class CompressorFactory {
             return bs;
         }
     }
+
+    static class J2KCompressor extends Compressor {
+        public static final String littleEndianKey = "littleEndian";
+        public static final String interleavedKey = "interleaved";
+        public static final String losslessKey = "lossless";
+        public static final String widthKey = "imageWidth";
+        public static final String heightKey = "imageHeight";
+        public static final String bitsPerSampleKey = "bitsPerSample";
+        public static final String channelsKey = "channels";
+        public static final String qualityKey = "quality";
+
+        // TODO: any way to copy these options from array metadata?
+        private boolean littleEndian;
+        private boolean interleaved;
+        private int width;
+        private int height;
+        private int bitsPerSample;
+        private int channels;
+        // specify lossless or quality, not both
+        private boolean lossless;
+        private double quality;
+
+        private J2KCompressor(Map<String, Object> map) {
+            littleEndian = booleanValue(map.get(littleEndianKey), false);
+            interleaved = booleanValue(map.get(interleavedKey), false);
+            width = intValue(map.get(widthKey), -1);
+            height = intValue(map.get(heightKey), -1);
+            bitsPerSample = intValue(map.get(bitsPerSampleKey), 8);
+            channels = intValue(map.get(channelsKey), 1);
+
+            // if neither quality nor lossless is defined, do lossless compression
+            quality = doubleValue(map.get(qualityKey), -1);
+            lossless = booleanValue(map.get(losslessKey), quality < 0);
+        }
+
+        @Override
+        public String toString() {
+            return "compressor=" + getId();
+        }
+
+        @Override
+        public String getId() {
+            return "j2k";
+        }
+
+        @Override
+        public void compress(InputStream is, OutputStream os) throws IOException {
+            try (ByteArrayOutputStream tmpOut = new ByteArrayOutputStream()) {
+                passThrough(is, tmpOut);
+                byte[] buffer = tmpOut.toByteArray();
+                JPEG2000Codec codec = new JPEG2000Codec();
+                JPEG2000CodecOptions options = getCodecOptions();
+                byte[] compressed = codec.compress(buffer, options);
+                os.write(compressed);
+            }
+            catch (CodecException e) {
+                throw new IOException(e);
+            }
+        }
+
+        @Override
+        public void uncompress(InputStream is, OutputStream os) throws IOException {
+            try {
+                JAIIIOService service = getService();
+                WritableRaster raster = (WritableRaster) service.readRaster(is, getCodecOptions());
+                byte[][] raw = AWTImageTools.getPixelBytes(raster, littleEndian);
+                for (byte[] channel : raw) {
+                    os.write(channel);
+                }
+            }
+            catch (ServiceException e) {
+                throw new IOException(e);
+            }
+        }
+
+        private JPEG2000CodecOptions getCodecOptions() {
+            JPEG2000CodecOptions options = new JPEG2000CodecOptions();
+            options.interleaved = interleaved;
+            options.littleEndian = littleEndian;
+            options.width = width;
+            options.height = height;
+            options.channels = channels;
+            options.bitsPerSample = bitsPerSample;
+            if (quality >= 0) {
+                options.quality = quality;
+            }
+            options.lossless = lossless;
+            options.numDecompositionLevels = 1;
+
+            return JPEG2000CodecOptions.getDefaultOptions(options);
+        }
+
+        private JAIIIOService getService() throws IOException {
+            try {
+              ServiceFactory factory = new ServiceFactory();
+              return factory.getInstance(JAIIIOService.class);
+            }
+            catch (DependencyException de) {
+              throw new IOException(JAIIIOServiceImpl.NO_J2K_MSG, de);
+            }
+        }
+
+    }
+
+
 }
 

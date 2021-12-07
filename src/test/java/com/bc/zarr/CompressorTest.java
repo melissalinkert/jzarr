@@ -28,6 +28,7 @@ package com.bc.zarr;
 
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.MatcherAssert.*;
+import static org.junit.Assert.assertNotNull;
 
 import com.bc.zarr.chunk.ZarrInputStreamAdapter;
 
@@ -151,6 +152,51 @@ public class CompressorTest {
         final MemoryCacheImageInputStream resultIis = new MemoryCacheImageInputStream(bais);
         resultIis.setByteOrder(byteOrder);
         final int[] uncompressed = new int[input.length];
+        resultIis.readFully(uncompressed, 0, uncompressed.length);
+        assertThat(input, is(equalTo(uncompressed)));
+    }
+
+    @Test
+    public void writeRead_J2KCompressor() throws IOException {
+        final Map<String, Object> j2kProperties = new LinkedHashMap<>();
+        j2kProperties.put(CompressorFactory.J2KCompressor.widthKey, 11);
+        j2kProperties.put(CompressorFactory.J2KCompressor.heightKey, 5);
+        j2kProperties.put(CompressorFactory.J2KCompressor.bitsPerSampleKey, 16);
+        j2kProperties.put(CompressorFactory.J2KCompressor.channelsKey, 1);
+        j2kProperties.put(CompressorFactory.J2KCompressor.interleavedKey, false);
+        j2kProperties.put(CompressorFactory.J2KCompressor.littleEndianKey, false);
+        j2kProperties.put(CompressorFactory.J2KCompressor.losslessKey, true);
+
+        final Compressor compressor = CompressorFactory.create("j2k", j2kProperties);
+        final ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
+        final short[] input = {
+                100, 22, 100, 22, 22, 22, 100, 100, 100, 22, 100,
+                100, 22, 100, 22, 22, 22, 100, 100, 100, 22, 100,
+                100, 22, 100, 22, 22, 22, 100, 100, 100, 22, 100,
+                100, 22, 100, 22, 22, 22, 100, 100, 100, 22, 100,
+                100, 22, 100, 22, 22, 22, 100, 100, 100, 22, 100
+        };
+        final MemoryCacheImageOutputStream iis = new MemoryCacheImageOutputStream(new ByteArrayOutputStream());
+        iis.setByteOrder(byteOrder);
+        iis.writeShorts(input, 0, input.length);
+        iis.seek(0);
+
+        ByteArrayOutputStream os;
+        ByteArrayInputStream is;
+
+        //write
+        os = new ByteArrayOutputStream();
+        compressor.compress(new ZarrInputStreamAdapter(iis), os);
+        final byte[] compressed = os.toByteArray();
+
+        //read
+        is = new ByteArrayInputStream(compressed);
+        os = new ByteArrayOutputStream();
+        compressor.uncompress(is, os);
+        final ByteArrayInputStream bais = new ByteArrayInputStream(os.toByteArray());
+        final MemoryCacheImageInputStream resultIis = new MemoryCacheImageInputStream(bais);
+        resultIis.setByteOrder(byteOrder);
+        final short[] uncompressed = new short[input.length];
         resultIis.readFully(uncompressed, 0, uncompressed.length);
         assertThat(input, is(equalTo(uncompressed)));
     }

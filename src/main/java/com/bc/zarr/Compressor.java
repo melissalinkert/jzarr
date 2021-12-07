@@ -50,4 +50,41 @@ public abstract class Compressor {
             read = is.read(bytes);
         }
     }
+
+    public boolean booleanValue(Object v, boolean defaultValue) {
+        if (v == null) {
+            return defaultValue;
+        }
+        if (v instanceof Boolean) {
+            return (Boolean) v;
+        }
+        return Boolean.parseBoolean(v.toString());
+    }
+
+    public int intValue(Object v, int defaultValue) {
+        int value = defaultValue;
+        if (v != null) {
+            if (v instanceof String) {
+                value = Integer.parseInt((String) v);
+            }
+            else if (v instanceof Number) {
+                value = ((Number) v).intValue();
+            }
+        }
+        return value;
+    }
+
+    public double doubleValue(Object v, double defaultValue) {
+        double value = defaultValue;
+        if (v != null) {
+            if (v instanceof String) {
+                value = Double.parseDouble((String) v);
+            }
+            else if (v instanceof Number) {
+                value = ((Number) v).doubleValue();
+            }
+        }
+        return value;
+    }
+
 }

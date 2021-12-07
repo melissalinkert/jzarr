@@ -37,6 +37,13 @@
             <artifactId>jblosc</artifactId>
             <version>1.0.1</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.openmicroscopy</groupId>
+            <artifactId>ome-codecs</artifactId>
+            <version>0.3.1</version>
+        </dependency>
+
         <!--        <dependency>-->
         <!--            <groupId>org.blosc</groupId>-->
         <!--            <artifactId>jblosc</artifactId>-->
